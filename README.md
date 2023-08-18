@@ -1,13 +1,26 @@
 # Advanced brainfuck compiler
 
-Usage:
+Compile:
 
-./bf_comp text (--simple)
+```
+./build-debug.sh
+```
 
-./bf_comp llvm (--simple)
+Run:
 
-# Optimize and run LLVM 
+```
+./out/bf llvm < ./programs/helloworlf.b > ./out/llvm.ll
+lli ./out/llvm.ll
+```
 
-opt -S -O3 < file.ll > opt.ll
+Optimize by LLVM:
 
-lli opt.ll
+```
+opt -S -O3 < ./out/llvm.ll > ./out/opt.ll
+```
+
+Test:
+
+```
+./test/test.py
+```
