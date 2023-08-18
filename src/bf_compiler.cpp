@@ -326,7 +326,7 @@ void zeroadd_pass(const std::vector<Inst>& in, std::vector<Inst>& out) {
 
                     Inst za_inst = {
                         .tag = ZeroAdd,
-                        .za = {0},
+                        .za = {},
                     };
                     for (auto [shift, mul] : shift_mul) {
                         if (shift != 0 && mul != 0) {

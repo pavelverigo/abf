@@ -14,7 +14,7 @@ enum Mode {
 };
 
 int main(int argc, char* argv[]) {
-    if (argc > 3) {
+    if (argc != 2 && argc != 3) {
         std::cerr << "Error: Incorrect number of arguments.\n";
         print_usage();
         return 1;

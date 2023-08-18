@@ -3,4 +3,4 @@
 *.ll
 *.bc
 *.exe
-out/
+__pycache__
