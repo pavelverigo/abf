@@ -125,7 +125,7 @@ void textinst_out(std::ostream& out, const std::vector<Inst>& data, int indent, 
 
 // Adopted from https://github.com/itchyny/llvm-brainfuck
 // TODO: use bitcode, text format have not guarantees to be backward compatible between llvm versions
-void textllvm_out(std::ostream& out, const std::vector<Inst>& data) {
+void textllvm_heap_out(std::ostream& out, const std::vector<Inst>& data) {
     int idx = 1;
     int loop_idx = 0;
     std::vector<int> loop_stack;
@@ -224,6 +224,103 @@ void textllvm_out(std::ostream& out, const std::vector<Inst>& data) {
     out << "declare void @free(i8*)\n\n";
     out << "declare i32 @putchar(i32)\n\n";
     out << "declare i32 @getchar()\n";
+}
+
+void textqbe_out(std::ostream& out, const std::vector<Inst>& data) {
+    int idx = 1;
+    int loop_idx = 0;
+    std::vector<int> loop_stack;
+    
+    // header
+    // out << "\n";
+    out << "export function w $main() {\n";
+    out << "@start\n";
+    out << "  call $putchar(w 97)\n";
+    out << "}\n";
+
+    return;
+
+    for (const auto& inst : data) {
+        switch (inst.tag) {
+        case Move: {
+            out << "  %" << idx << " = load i8*, i8** %ptr, align 8\n";
+            out << "  %" << idx + 1 << " = getelementptr inbounds i8, i8* %" << idx << ", i32 " << static_cast<int>(inst.move) << "\n";
+            out << "  store i8* %" << idx + 1 << ", i8** %ptr, align 8\n";
+            idx += 2;
+        } break;
+        case Add: {
+            out << "  %" << idx << " = load i8*, i8** %ptr, align 8\n";
+            out << "  %" << idx + 1 << " = load i8, i8* %" << idx << ", align 1\n";
+            out << "  %" << idx + 2 << " = add i8 %" << idx + 1 << ", " << static_cast<int>(inst.add) << "\n";
+            out << "  store i8 %" << idx + 2 << ", i8* %" << idx << ", align 1\n";
+            idx += 3;
+        } break;
+        case JumpL: {
+            int while_idx = loop_idx;
+            out << "  br label %while_cond" << while_idx << "\n";
+            out << "while_cond" << while_idx << ":\n";
+            out << "  %" << idx << " = load i8*, i8** %ptr, align 8\n";
+            out << "  %" << idx + 1 << " = load i8, i8* %" << idx << ", align 1\n";
+            out << "  %" << idx + 2 << " = icmp ne i8 %" << idx + 1 << ", 0\n";
+            out << "  br i1 %" << idx + 2 << ", label %while_body" << while_idx << ", label %while_end" << while_idx << "\n";
+            out << "while_body" << while_idx << ":\n";
+            idx += 3;
+
+            loop_stack.push_back(loop_idx);
+            loop_idx++;
+        } break;
+        case JumpR: {
+            int while_idx = loop_stack.back();
+            out << "  br label %while_cond" << while_idx << "\n";
+            out << "while_end" << while_idx << ":\n";
+
+            loop_stack.pop_back();
+        } break;
+        case Write: {
+            out << "  %" << idx << " = load i8*, i8** %ptr, align 8\n";
+            out << "  %" << idx + 1 << " = load i8, i8* %" << idx << ", align 1\n";
+            out << "  %" << idx + 2 << " = sext i8 %" << idx + 1 << " to i32\n";
+            out << "  %" << idx + 3 << " = call i32 @putchar(i32 %" << idx + 2 << ")\n";
+            idx += 4;
+        } break;
+        case Read: {
+            out << "  %" << idx << " = call i32 @getchar()\n";
+            out << "  %" << idx + 1 << " = trunc i32 %" << idx << " to i8\n";
+            out << "  %" << idx + 2 << " = load i8*, i8** %ptr, align 8\n";
+            out << "  store i8 %" << idx + 1 << ", i8* %" << idx + 2 << ", align 1\n";
+            idx += 3;
+        } break;
+        case ZeroAdd: {
+            out << "  %" << idx << " = load i8*, i8** %ptr, align 8\n";
+            out << "  %" << idx + 1 << " = load i8, i8* %" << idx << ", align 1\n";
+            out << "  store i8 0, i8* %" << idx << ", align 1\n";
+
+            for (int i = 0; i < inst.za.cnt; ++i) {
+                int loop_idx = idx + 2 + i * 4;
+
+                out << "  %" << loop_idx << " = getelementptr inbounds i8, i8* %" << idx << ", i32 " << static_cast<int>(inst.za.shift[i]) << "\n";
+                out << "  %" << loop_idx + 1 << " = load i8, i8* %" << loop_idx << ", align 1\n";
+
+                out << "  %" << loop_idx + 2 << " = mul i8 %" << idx + 1 << ", " << static_cast<int>(inst.za.mul[i]) << "\n";
+
+                out << "  %" << loop_idx + 3 << " = add i8 %" << loop_idx + 1 << ", %" << loop_idx + 2 << "\n";
+
+                out << "  store i8 %" << loop_idx + 3 << ", i8* %" << loop_idx << ", align 1\n";
+            }
+
+            idx += 2 + inst.za.cnt * 4;
+        } break;
+        default: {
+            panic("not implemented, textllvm_out");
+        } break;
+        }
+    }
+
+    // footer
+    out << "  %" << idx << " = load i8*, i8** %data, align 8\n";
+    out << "  call void @free(i8* %" << idx << ")\n";
+    out << "  ret i32 0\n";
+    out << "}\n\n";
 }
 
 void concat_pass(const std::vector<Inst>& in, std::vector<Inst>& out) {

@@ -4,13 +4,14 @@
 
 void print_usage() {
     std::cerr << "Usage:\n";
-    std::cerr << "  ./bf_comp text (--simple)\n";
-    std::cerr << "  ./bf_comp llvm (--simple)\n";
+    std::cerr << "  ./bf text (--simple)\n";
+    std::cerr << "  ./bf llvm (--simple)\n";
 }
 
 enum Mode {
     Text,
     LLVM,
+    QBE,
 };
 
 int main(int argc, char* argv[]) {
@@ -27,6 +28,8 @@ int main(int argc, char* argv[]) {
         mode = Text;
     } else if (argument == "llvm") {
         mode = LLVM;
+    } else if (argument == "qbe") {
+        mode = QBE;
     } else {
         std::cerr << "Error: No such mode.\n";
         print_usage();
@@ -66,7 +69,10 @@ int main(int argc, char* argv[]) {
         textinst_out(std::cout, res);
     } break;
     case LLVM: {
-        textllvm_out(std::cout, res);
+        textllvm_heap_out(std::cout, res);
+    } break;
+    case QBE: {
+        textqbe_out(std::cout, res);
     } break;
     }
 

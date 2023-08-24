@@ -43,7 +43,9 @@ void rawbf_in(std::istream& in, std::vector<Inst>& data);
 
 void textinst_out(std::ostream& out, const std::vector<Inst>& data, int indent = 2, bool add_sign = true);
 
-void textllvm_out(std::ostream& out, const std::vector<Inst>& data);
+void textllvm_heap_out(std::ostream& out, const std::vector<Inst>& data);
+
+void textqbe_out(std::ostream& out, const std::vector<Inst>& data);
 
 void concat_pass(const std::vector<Inst>& in, std::vector<Inst>& out);
 
