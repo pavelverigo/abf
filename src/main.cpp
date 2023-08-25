@@ -4,8 +4,10 @@
 
 void print_usage() {
     std::cerr << "Usage:\n";
-    std::cerr << "  ./bf text (--simple)\n";
-    std::cerr << "  ./bf llvm (--simple)\n";
+    std::cerr << "  (--disable-passes) option\n";
+    std::cerr << "  ./bf text\n";
+    std::cerr << "  ./bf llvm\n";
+    std::cerr << "  ./bf qbe\n";
 }
 
 enum Mode {
@@ -39,7 +41,7 @@ int main(int argc, char* argv[]) {
     bool simple = false;
     if (argc == 3) {
         std::string opt = argv[2];
-        if (opt == "--simple") {
+        if (opt == "--disable-passes") {
             simple = true;
         } else {
             std::cerr << "Error: No such option.\n";
@@ -54,14 +56,12 @@ int main(int argc, char* argv[]) {
     std::vector<Inst> res;
     std::vector<Inst> temp = raw;
 
-    {
+    if (!simple) {
         concat_pass(temp, res);
-        
-        if (!simple) {
-            res.swap(temp);
-            res.clear();
-            zeroadd_pass(temp, res);
-        }
+
+        res.swap(temp);
+        res.clear();
+        zeroadd_pass(temp, res);
     }
 
     switch (mode) {

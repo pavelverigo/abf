@@ -4,3 +4,4 @@
 *.bc
 *.exe
 __pycache__
+*.ssa
